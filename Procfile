@@ -1,1 +1,1 @@
-web: python app.py -model model.json
+web: gunicorn app:app --log-file - 
