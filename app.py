@@ -44,61 +44,61 @@ def main():
 
 		# return render_template('landing.html')
 
-	@app.route('/chat')
-	def chat():
-		return render_template("index.html")
+	# @app.route('/chat')
+	# def chat():
+	# 	return render_template("index.html")
 
-	@app.route('/prompt', methods=["GET", "POST"])
-	def prompt():
-		if request.method == 'POST':
-			prompt = request.form["prompt"]
-			return render_template("message.html", 
-				align = "message-right",
-				text = prompt,
-				timestamp = str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
-			)# "<p style='text-align:left;'>"+response + "?</p>"
-		return ""
+	# @app.route('/prompt', methods=["GET", "POST"])
+	# def prompt():
+	# 	if request.method == 'POST':
+	# 		prompt = request.form["prompt"]
+	# 		return render_template("message.html", 
+	# 			align = "message-right",
+	# 			text = prompt,
+	# 			timestamp = str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
+	# 		)# "<p style='text-align:left;'>"+response + "?</p>"
+	# 	return ""
 
-	@app.route('/response', methods=["GET", "POST"])
-	def response():
-		if request.method == 'POST':
-			prompt = request.form["prompt"]
-			response = chatBot.generateResponse(prompt)
-			return render_template("message.html", 
-				align="message-left",
-				text=response,
-				timestamp=str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
-			)# "<p style='text-align:left;'>"+response + "?</p>"
-		return ""
+	# @app.route('/response', methods=["GET", "POST"])
+	# def response():
+	# 	if request.method == 'POST':
+	# 		prompt = request.form["prompt"]
+	# 		response = chatBot.generateResponse(prompt)
+	# 		return render_template("message.html", 
+	# 			align="message-left",
+	# 			text=response,
+	# 			timestamp=str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
+	# 		)# "<p style='text-align:left;'>"+response + "?</p>"
+	# 	return ""
 
-	@app.route('/responseFormat', methods=["GET", "POST"])
-	def responseFormat():
-		if request.method == 'POST':
-			response = request.json
+	# @app.route('/responseFormat', methods=["GET", "POST"])
+	# def responseFormat():
+	# 	if request.method == 'POST':
+	# 		response = request.json
 
-			response = response["response"]["text"].split(" ")
-			response = chatBot.formatResponse(response)
-			returnMessage = render_template("message.html", 
-				align="message-left",
-				text=response,
-				timestamp=str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
-			)# "<p style='text-align:left;'>"+response + "?</p>"
-			print returnMessage
-			return returnMessage
-		return ""		
+	# 		response = response["response"]["text"].split(" ")
+	# 		response = chatBot.formatResponse(response)
+	# 		returnMessage = render_template("message.html", 
+	# 			align="message-left",
+	# 			text=response,
+	# 			timestamp=str(datetime.datetime.now().hour) + ":" + str(datetime.datetime.now().minute)
+	# 		)# "<p style='text-align:left;'>"+response + "?</p>"
+	# 		print returnMessage
+	# 		return returnMessage
+	# 	return ""		
 
-	@app.route('/responses', methods=["GET", "POST"])
-	def responses():
+	# @app.route('/responses', methods=["GET", "POST"])
+	# def responses():
 
-		if request.method == 'POST':
-			prompt = request.json
-			prompt = prompt["prompt"]
-			print "got the prompt"
-			responses = chatBot.generateResponses(prompt)
-			print "generated responses"
-			return json.dumps(responses)
-		return ""
-	app.run(debug=True)
+	# 	if request.method == 'POST':
+	# 		prompt = request.json
+	# 		prompt = prompt["prompt"]
+	# 		print "got the prompt"
+	# 		responses = chatBot.generateResponses(prompt)
+	# 		print "generated responses"
+	# 		return json.dumps(responses)
+	# 	return ""
+	app.run(debug=False)
 
 if __name__ == '__main__':
 	main()
