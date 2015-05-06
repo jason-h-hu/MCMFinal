@@ -30,8 +30,10 @@ def main():
 	# chatBot = Chatbot(model, "2012-05")
 
 	# create our little application :)
+	print "making app ..."
 	app = Flask(__name__)
 	app.config.from_object(__name__)
+	print "made app"
 
 	@app.route('/', methods=["GET", "POST"])
 	def index():
