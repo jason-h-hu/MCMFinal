@@ -35,6 +35,7 @@ def main():
 
 	@app.route('/', methods=["GET", "POST"])
 	def index():
+		print "THIS SHOULD WORK?"
 		return "Hello"
 		# if request.method == 'POST':
 		# 	print request.form
