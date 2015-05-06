@@ -24,10 +24,10 @@ def main():
 
 
 	# startChatbot(model)
-	model = buildModel(args.profile) if args.profile != None else loadModel(args.model)
-	if args.save != None:
-		saveModel(model, args.save)
-	chatBot = Chatbot(model, "2012-05")
+	# model = buildModel(args.profile) if args.profile != None else loadModel(args.model)
+	# if args.save != None:
+	# 	saveModel(model, args.save)
+	# chatBot = Chatbot(model, "2012-05")
 
 	# create our little application :)
 	app = Flask(__name__)
@@ -35,13 +35,14 @@ def main():
 
 	@app.route('/', methods=["GET", "POST"])
 	def index():
-		if request.method == 'POST':
-			print request.form
-			date = request.form["year"] + "-" + request.form["month"]
-			chatBot.updateDate(date)
-			return redirect("/chat")
+		return "Hello"
+		# if request.method == 'POST':
+		# 	print request.form
+		# 	date = request.form["year"] + "-" + request.form["month"]
+		# 	chatBot.updateDate(date)
+		# 	return redirect("/chat")
 
-		return render_template('landing.html')
+		# return render_template('landing.html')
 
 	@app.route('/chat')
 	def chat():
