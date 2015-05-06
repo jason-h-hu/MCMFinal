@@ -1,0 +1,30 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="container-fluid dateform">
+	<form class="dateform" method="post" name="date" id="date">
+		<H1>I'd like to talk to myself from</H1>
+		<br>
+		<div class="col-md-4">
+			<select class="form-control landingSelect" id="month" name="month">
+				{% for i in range(1, 10) %}
+					<option value={{"0" + i|string}}>{{i}}</option>
+				{% endfor %}
+				{% for i in range(10, 13) %}
+					<option value={{i}}>{{i}}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="col-md-4">
+			<select class="form-control landingSelect" id="year" name="year">
+				{% for i in range(2011, 2016) %}
+					<option value={{i}}>{{i}}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="col-md-2 ">
+			<input class="btn btn-default landingSelect" type="submit" value="Submit">
+		</div>
+	</form>
+</div>
+{% endblock %}

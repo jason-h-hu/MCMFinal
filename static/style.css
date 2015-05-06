@@ -1,0 +1,76 @@
+.landingSelect {
+	font-size: 14pt;
+	height: 28pt;
+}​
+div, p {
+	white-space: pre-wrap;
+}
+
+.dateform {
+	padding-top: 100pt;
+}
+
+.message {
+	line-height: 18pt;
+	font-size: 18pt;
+	font-weight: bold;
+}
+
+.myForm {
+	line-height: 24pt;
+	padding: 20px 10px;
+	text-align: right;
+}
+
+.message .text {
+}
+
+.message .timestamp {
+	font-size: 14pt;
+	font-style: italic;
+	font-weight: normal;
+	color: #888;
+}
+
+.message-left {
+	text-align: left;
+	color: #2c3e50;
+}
+
+.message-right {
+	text-align: right;
+	color: #c0392b;
+}
+
+.chatWindow {
+	background-color: rgba(255, 255, 255, 0.25);
+}
+.chats {
+	height: 80%;
+	overflow: scroll;
+	background-color: rgba(255, 255, 255, 0.25);
+}
+
+.description {
+    font: 20px Courier, monospace;
+	font-weight: bold;
+
+}
+
+.description tspan{
+	font-weight: bold
+}
+
+.vizButton {
+	width: 100%;
+	height: 80%;
+	margin-top: 5%;
+	color: #c0392b;
+	border: 0;
+	/*margin-top: 50%;*/
+}
+
+/*.speaker {
+	font-weight: bold;
+}
+*/

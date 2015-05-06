@@ -1,0 +1,361 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="chatWindow panel panel-default ">
+
+	<div class="result container-fluid chats"></div>
+
+
+
+	<div class="panel-footer">
+		<form action="" method="post" name="prompt" id="myform" class="container-fluid ">
+			<input class="message myForm form-control" id="myprompt" name="prompt" type="text" value="" autocomplete=off>
+		</form>
+	</div>
+	
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript">
+
+	var width = $(".col-md-8").width(),
+	    height = $(window).height();
+
+	var color = d3.scale.category10(),
+		gold = "#f1c40f"
+
+	var nodes = []
+
+	var force = d3.layout.force()
+	    .nodes(nodes)
+	    .charge(-10)
+	    .gravity(0.05)
+	    .size([width, height])
+	    .on("tick", tick);
+
+	var svg = d3.select(".myCanvas").append("svg")
+	    .attr("width", width)
+	    .attr("height", 0);
+
+	var node = svg.selectAll(".node");
+
+	var description = svg.append("g")
+		.append("text")
+		.attr("class", "description")
+		.attr("x", width/2)
+		.attr("y", height-100)
+		.attr("text-anchor", "middle")
+
+	var tooltip = d3.select("body")
+		.append("div")
+		.style("position", "absolute")
+		.style("z-index", "10")
+		.style("width", 300)
+		.style("padding", 10)
+		.style("margins", 10)
+		.style("background-color", "rgba(255, 255, 255, 0.5)")
+		.style("visibility", "hidden");
+
+	var tooltipDate = tooltip.append("p")
+	var tooltipPrompt = tooltip.append("p")
+	var tooltipResponse = tooltip.append("p").style("text-align", "right")
+
+
+	var numPrompts = 0;
+	var vizOn = false;
+
+	$('#myform').keypress(function (e) {
+		if (e.which == 13) {
+			numPrompts ++;
+			var prompt = {"prompt": $('#myprompt').val()}
+			$('#myprompt').val("")
+			$.post( "/prompt", prompt, function( data ) {
+				renderPrompt(data)
+				if (!vizOn){
+					if (numPrompts == 3){
+						$(".myCanvas").append('<button type="button" class="vizButton message btn btn-default btn-lg">How Does This Work?</button>')
+						$(".vizButton").on( "click", function(){
+							svg.attr("height", height)
+							$(".vizButton").remove()
+							vizOn = true;
+							alert("The chatbot creates responses based off of your old facebook chats! Say something to see how it works.")
+						})
+					}
+					$.post( "/response", prompt, function( data ) {
+						renderResponse(data);
+					});			
+				}
+				else {
+					clear();
+					$.ajax({
+						type: "POST",
+						contentType: "application/json; charset=utf-8",
+						url: "/responses",
+						data: JSON.stringify(prompt),
+						success: function (data) {
+							if (data.length == 0){
+								alert("not enough data :(")
+							}
+							else {
+								renderResponses(data);
+							}
+						},
+						dataType: "json"
+					});
+				}
+			});
+			return false;
+		}
+	});
+
+	// Takes in the formatted html that's the prompt
+	function renderPrompt(promptHTML){
+		$( ".result" ).append( promptHTML );
+		$(".chats").scrollTop($(".chats")[0].scrollHeight);
+	}
+
+	function renderResponse(responseHTML){
+		$( ".result" ).append( responseHTML );
+		$(".chats").scrollTop($(".chats")[0].scrollHeight);
+	}
+
+	var hasRenderResponses = false;
+	var hasExplainedWeighting = false;
+	function renderResponses(responses){
+
+		if (!hasRenderResponses){
+			hasRenderResponses = true;
+			alert("Based off of the words you just entered, the AI finds all old conversations that contained those words.")
+		}
+
+		var radiusScale = d3.scale.linear()
+			.domain([0, d3.max(responses.map(function(d){ return -d[0]; }))])
+			.range([5, 20])
+
+		words = {}
+		for (var i = 0; i < responses.length; i++) {
+			response = responses[i]
+			word = response[2];
+			if (!(word in words)){
+				words[word] = [];
+			}
+			words[word].push(response);
+		}
+
+		keys = []
+		for (word in words) {
+			keys.push(word)
+		}
+
+		responses.sort(function(a, b){ return a[0] - b[0]; })
+		total = responses
+			.map(function(d){ return d[0]; })
+			.reduce(function(a, b){ return a+b; })
+		pivot = Math.random()*total
+		total = 0
+
+		pickedResponse = responses[0]
+		for (var i = 0; i < responses.length; i++){
+			total += responses[i][0]
+			if (total <= pivot){
+				pickedResponse = responses[i];
+				break;
+			}
+		}
+		renderResponsesFromWord(keys, words, 0);
+		function renderResponsesFromWord(listOfWords, responses, c){
+			setTimeout(function(){
+
+				if (listOfWords.length > 0){
+					var word = listOfWords.pop()
+					var fill = color(c%10)
+					description.text("Gathering past conversations with the word ")
+					description.append('tspan')
+						.text("[ " + word + " ]")
+						.style("fill", fill)
+					// descriptionWord.text(word)
+						
+					setTimeout(function(){
+						var ns = responses[word].map(function(d) { return { 
+								value: -d[0], 
+								text: d[1], 
+								word: d[2],
+								fill: fill,
+								radius: radiusScale(-d[0])
+							}; 
+						});
+						for (var i = 0; i < ns.length; i++){
+							nodes.push(ns[i]);
+						}
+						d = c+1
+						start()
+						renderResponsesFromWord(listOfWords, responses, d);
+
+					}, 1500)
+				}
+				else {
+
+					if (!hasExplainedWeighting) {
+						hasExplainedWeighting = true;
+						alert("A response is then chosen randomly. Conversations are weighted by date, as well as similarity to the prompt.")
+					}
+					description.text("Picking conversation ...")
+					setTimeout(function(){
+						var found = 0;
+						node.each(function(d, i){
+							if (d.text.prompt["text"] == pickedResponse[1]["prompt"]["text"]){
+								found = i
+							}
+						})	
+						node.transition().attr("fill", function(d, i){
+							if (found == i){
+								return gold
+							}
+							return "gray"
+
+						})
+						$.ajax({
+							type: "POST",
+							contentType: "application/json; charset=utf-8",
+							url: "/responseFormat",
+							data: JSON.stringify(pickedResponse[1]),
+							success: function (data) {
+								renderResponse(data);
+							},
+							error: function(XMLHttpRequest, textStatus, errorThrown) { 
+								alert("Status: " + textStatus); alert("Error: " + errorThrown); 
+							},
+							dataType: "text"
+						});
+
+						description.text("Picked a conversation!")
+					}, 1500)
+				}
+			}, 500)
+		}
+	}
+
+	function start() {
+		  node = node.data(force.nodes());
+		  node.enter().append("circle")
+				  .attr("class", "node ")
+				  .attr("fill", "white")
+				  .transition()
+				  .attr("r", function(d){ return d.radius })
+				  .attr("fill", function(d){ return d.fill });
+		  node.exit().remove();
+
+		node.on("mouseover", function(d){
+				d3.select(this)
+					.style("stroke", gold)
+					.style("stroke-width", 5)
+				renderTooltip(d)
+				return tooltip.style("visibility", "visible");
+			})
+			.on("mousemove", function(d){
+				return tooltip.style("top", (event.pageY-100)+"px").style("left",(event.pageX+20)+"px");
+			})
+			.on("mouseout", function(d){
+				tooltipPrompt.text("")
+				tooltipResponse.text("")
+				tooltipDate.text("")
+
+				d3.select(this).style("stroke-width", 0)
+				return tooltip.style("visibility", "hidden");
+			});
+
+		 //  })
+
+		 //  node.on("mouseout", function(d){
+			// tooltipPrompt.text("")
+			// tooltipResponse.text("")
+			// tooltipDate.text("")
+			// d3.select(this)
+			// 	.style("stroke-width", 0)
+
+		 //  })
+
+		  force.start();
+	}
+
+	function renderTooltip(conversation){
+		tooltipPrompt.html()
+		conversation = conversation["text"]
+		tooltipDate.text(conversation["time"])
+		// tooltipPrompt.append('span')
+		// 	.text(conversation["prompt"]["speaker"] + ": ")
+		// 	.style("font-weight", "bold")
+		// 	.style("color", "#c0392b")
+		// tooltipPrompt.append('br')
+		tooltipPrompt//.append('span')
+			.text(conversation["prompt"]["text"])
+			.style("font-weight", "bold")
+			.style("color", "#c0392b")
+
+		// tooltipResponse.append('span')
+		// 	.text(conversation["response"]["speaker"] + ": ")
+		// 	.style("font-weight", "bold")
+		// 	.style("color", "#2c3e50")
+		// tooltipResponse.append('br')
+		tooltipResponse//.append('span')
+			.text(conversation["response"]["text"])
+			.style("font-weight", "bold")
+			.style("color", "#2c3e50")
+
+
+	}
+	function clear(){
+		description.text("")
+		node.transition().attr("fill", "white")
+
+	    force.gravity(0)
+	    force.start();
+		setTimeout(function(){
+			while (nodes.length > 0) {
+				nodes.pop();
+			}
+			// nodes = [];
+		    force.gravity(0.05)
+			start();
+			force.start();
+		}, 1000)
+	}
+
+	function tick() {
+		var q = d3.geom.quadtree(nodes),
+	      i = 0,
+	      n = nodes.length;
+
+	  while (++i < n) q.visit(collide(nodes[i]));
+
+	  node.attr("cx", function(d) { return d.x; })
+	      .attr("cy", function(d) { return d.y; })
+
+	}
+	function collide(node) {
+	  var r = node.radius,
+	      nx1 = node.x - r,
+	      nx2 = node.x + r,
+	      ny1 = node.y - r,
+	      ny2 = node.y + r;
+	  return function(quad, x1, y1, x2, y2) {
+	    if (quad.point && (quad.point !== node)) {
+	      var x = node.x - quad.point.x,
+	          y = node.y - quad.point.y,
+	          l = Math.sqrt(x * x + y * y),
+	          r = node.radius + quad.point.radius;
+	      if (l < r) {
+	        l = (l - r) / l * .5;
+	        node.x -= x *= l;
+	        node.y -= y *= l;
+	        quad.point.x += x;
+	        quad.point.y += y;
+	      }
+	    }
+	    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+	  };
+	}
+
+</script>
+
+{% endblock %}
